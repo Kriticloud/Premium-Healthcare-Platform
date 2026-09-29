@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Outlet, useLocation, Link } from "react-router";
 import { Button } from "./ui/button";
 import { motion } from "motion/react";
@@ -10,6 +10,17 @@ export function RootLayout() {
   const location = useLocation();
   const isLanding = location.pathname === "/";
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (!mobileMenuOpen) return;
+
+    const closeOnEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setMobileMenuOpen(false);
+    };
+
+    window.addEventListener("keydown", closeOnEscape);
+    return () => window.removeEventListener("keydown", closeOnEscape);
+  }, [mobileMenuOpen]);
 
   return (
     <div className="min-h-screen bg-background">
@@ -66,6 +77,9 @@ export function RootLayout() {
             <div className={`${isLanding ? "flex" : "hidden md:flex"} items-center gap-3`}>
               {isLanding ? (
                 <>
+                  <Button variant="ghost" className="hidden sm:inline-flex" asChild>
+                    <a href="#for-practices">For practices</a>
+                  </Button>
                   <Button variant="ghost" className="hidden sm:inline-flex" asChild>
                     <Link to="/dashboard">Patient demo</Link>
                   </Button>

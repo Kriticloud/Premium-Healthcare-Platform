@@ -6,18 +6,22 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Progress } from "../components/ui/progress";
 import { Link } from "react-router";
 import { 
-  Calendar, Clock, TrendingUp, FileText, CreditCard, 
-  Star, Bell, Settings, ChevronRight, Sparkles, AlertCircle, CheckCircle
+  Calendar, Clock, FileText, CreditCard,
+  Star, Bell, Settings, ChevronRight, Sparkles, AlertCircle
 } from "lucide-react";
 import { AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { demoDate } from "../data/demoDates";
+import { getProviderById } from "../data/providers";
+import { useDemoAppointments } from "../data/useDemoAppointments";
+import { useState } from "react";
 
 const upcomingAppointments = [
   {
     id: 1,
     dentist: "Dr. Sarah Chen",
     type: "Final Placement",
-    date: "April 12, 2026",
+    date: demoDate(14),
     time: "2:00 PM",
     location: "Beverly Hills, CA",
     image: "photo-1594824476967-48c8b964273f",
@@ -26,7 +30,7 @@ const upcomingAppointments = [
     id: 2,
     dentist: "Dr. Sarah Chen",
     type: "Follow-up Visit",
-    date: "May 10, 2026",
+    date: demoDate(42),
     time: "10:00 AM",
     location: "Beverly Hills, CA",
     image: "photo-1594824476967-48c8b964273f",
@@ -41,14 +45,18 @@ const recentActivity = [
 ];
 
 const progressData = [
-  { month: "Jan", progress: 0 },
-  { month: "Feb", progress: 15 },
-  { month: "Mar", progress: 45 },
-  { month: "Apr", progress: 75 },
-  { month: "May", progress: 100 },
+  { month: "Start", progress: 0 },
+  { month: "Week 2", progress: 15 },
+  { month: "Week 4", progress: 45 },
+  { month: "Week 6", progress: 75 },
+  { month: "Week 8", progress: 100 },
 ];
 
 export function PatientDashboard() {
+  const { appointments, error: appointmentError, ready, cancel } = useDemoAppointments();
+  const [appointmentActionError, setAppointmentActionError] = useState<string | null>(null);
+  const browserAppointments = appointments.filter((appointment) => appointment.status === "scheduled");
+
   return (
     <div className="min-h-screen bg-background">
       <div className="max-w-[1400px] mx-auto px-6 lg:px-8 py-12">
@@ -66,10 +74,10 @@ export function PatientDashboard() {
           </div>
 
           <div className="flex gap-3">
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" aria-label="Notifications unavailable in preview" disabled title="Notifications are not connected.">
               <Bell className="w-5 h-5" />
             </Button>
-            <Button variant="outline" size="icon">
+            <Button variant="outline" size="icon" aria-label="Settings unavailable in preview" disabled title="Account settings are not connected.">
               <Settings className="w-5 h-5" />
             </Button>
             <Avatar className="w-12 h-12">
@@ -163,10 +171,78 @@ export function PatientDashboard() {
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 }}
+            >
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <h2>Appointments in This Browser</h2>
+                  <p className="text-sm text-[var(--medium-gray)]">Demo-only selections saved locally on this device.</p>
+                </div>
+                <Button variant="outline" asChild>
+                  <Link to="/discover">Book a demo visit</Link>
+                </Button>
+              </div>
+              {appointmentError && <p className="mb-4 text-sm text-red-700" role="alert">{appointmentError}</p>}
+              {appointmentActionError && <p className="mb-4 text-sm text-red-700" role="alert">{appointmentActionError}</p>}
+              {!appointmentError && ready && browserAppointments.length === 0 && (
+                <Card className="p-6 text-sm text-[var(--medium-gray)]">
+                  No appointments have been saved in this browser yet. Start from Discover to try the full demo flow.
+                </Card>
+              )}
+              <div className="space-y-4">
+                {browserAppointments.map((appointment) => {
+                  const provider = getProviderById(String(appointment.providerId));
+                  return (
+                    <Card key={appointment.id} className="p-6">
+                      <div className="flex flex-wrap items-start justify-between gap-4">
+                        <div>
+                          <h3>{provider?.name ?? "Sample provider"}</h3>
+                          <p className="text-sm text-[var(--medium-gray)]">
+                            {appointment.treatment.replace("-", " ")} · {appointment.consultationType === "in-person" ? "In-person" : "Virtual"}
+                          </p>
+                          <p className="mt-2 flex items-center gap-2 text-sm">
+                            <Calendar className="h-4 w-4" />{appointment.date}
+                            <Clock className="ml-2 h-4 w-4" />{appointment.time}
+                          </p>
+                        </div>
+                        <div className="flex gap-2">
+                          <Button variant="outline" asChild>
+                            <Link
+                              to={`/book/${appointment.providerId}?reschedule=${encodeURIComponent(appointment.id)}&date=${appointment.date}&time=${encodeURIComponent(appointment.time)}`}
+                            >
+                              Reschedule
+                            </Link>
+                          </Button>
+                          <Button
+                            variant="outline"
+                            disabled={!ready}
+                            onClick={() => {
+                              try {
+                                cancel(appointment.id);
+                                setAppointmentActionError(null);
+                              } catch (cause) {
+                                setAppointmentActionError(cause instanceof Error ? cause.message : "Could not cancel this demo appointment.");
+                              }
+                            }}
+                          >
+                            Cancel demo
+                          </Button>
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </motion.div>
+
+            {/* Illustrative Upcoming Appointments */}
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
             >
               <div className="flex items-center justify-between mb-4">
-                <h2>Upcoming Appointments</h2>
+                <h2>Example Appointments</h2>
                 <Button variant="ghost" asChild>
                   <Link to="/timeline">View All <ChevronRight className="ml-1 w-4 h-4" /></Link>
                 </Button>
@@ -206,11 +282,11 @@ export function PatientDashboard() {
                         </div>
 
                         <div className="flex gap-2">
-                          <Button size="sm" variant="outline" className="flex-1">
+                          <Button size="sm" variant="outline" className="flex-1" disabled title="Rescheduling is not connected in this preview.">
                             Reschedule
                           </Button>
-                          <Button size="sm" className="flex-1 bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                            View Details
+                          <Button size="sm" className="flex-1 bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90" asChild>
+                            <Link to="/timeline">View Timeline</Link>
                           </Button>
                         </div>
                       </div>
@@ -229,7 +305,7 @@ export function PatientDashboard() {
               <h2 className="mb-4">Recent Activity</h2>
               <Card className="divide-y divide-border">
                 {recentActivity.map((activity) => (
-                  <div key={activity.id} className="p-6 hover:bg-[var(--soft-beige)]/30 transition-colors cursor-pointer">
+                  <div key={activity.id} className="p-6">
                     <div className="flex items-start gap-4">
                       <div className={`w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0 ${
                         activity.type === "appointment" ? "bg-[var(--premium-blue)]/10" :
@@ -334,7 +410,7 @@ export function PatientDashboard() {
                       <span className="text-sm text-[var(--medium-gray)]">Balance Due</span>
                       <span className="text-xl">$8,500</span>
                     </div>
-                    <p className="text-xs text-[var(--medium-gray)]">2 payments remaining</p>
+                    <p className="text-xs text-[var(--medium-gray)]">3 sample installments remaining</p>
                   </div>
 
                   <div className="pt-4 border-t border-border">
@@ -342,7 +418,7 @@ export function PatientDashboard() {
                       <span className="text-sm text-[var(--medium-gray)]">Next Payment</span>
                       <span className="font-medium">$2,850</span>
                     </div>
-                    <p className="text-xs text-[var(--medium-gray)]">Due April 12, 2026</p>
+                    <p className="text-xs text-[var(--medium-gray)]">Due {demoDate(14)}</p>
                   </div>
                 </div>
 
@@ -379,7 +455,7 @@ export function PatientDashboard() {
                 </div>
 
                 <div className="flex gap-2">
-                  <Button variant="outline" size="sm" className="flex-1">
+                  <Button variant="outline" size="sm" className="flex-1" disabled title="Secure provider messaging is not connected.">
                     Message
                   </Button>
                   <Button size="sm" className="flex-1" asChild>
@@ -408,8 +484,8 @@ export function PatientDashboard() {
                 <p className="text-sm text-[var(--medium-gray)] mb-4">
                   Earn points with every visit and redeem for treatments!
                 </p>
-                <Button variant="outline" size="sm" className="w-full">
-                  View Rewards
+                <Button variant="outline" size="sm" className="w-full" disabled title="Rewards are not connected in this preview.">
+                  Rewards unavailable
                 </Button>
               </Card>
             </motion.div>

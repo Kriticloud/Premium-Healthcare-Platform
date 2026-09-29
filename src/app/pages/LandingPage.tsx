@@ -5,9 +5,12 @@ import { Badge } from "../components/ui/badge";
 import { Link } from "react-router";
 import { 
   Sparkles, ArrowRight, Star, Shield, Calendar, 
-  Award, ChevronRight, Play, TrendingUp, Users
+  Award, ChevronRight, Play, TrendingUp
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+
+const salesEmail = import.meta.env.VITE_SALES_EMAIL?.trim();
+const salesEmailIsConfigured = Boolean(salesEmail && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(salesEmail));
 
 const treatments = [
   { name: "Teeth Whitening", description: "Professional whitening for a brighter smile", icon: Sparkles },
@@ -99,8 +102,7 @@ export function LandingPage() {
               </h1>
 
               <p className="text-xl text-[var(--medium-gray)] mb-8 leading-relaxed max-w-xl">
-                Experience luxury dental care with SmileOS. Discover world-class dentists, 
-                track your transformation, and achieve the smile you've always dreamed of.
+                Preview the SmileOS dental-care experience: provider profiles, appointment scheduling, treatment journeys, and patient account screens.
               </p>
 
               <div className="flex flex-wrap gap-4">
@@ -121,16 +123,16 @@ export function LandingPage() {
               {/* Stats */}
               <div className="grid grid-cols-3 gap-8 mt-12 pt-12 border-t border-border">
                 <div>
-                  <div className="text-3xl mb-1">50K+</div>
-                  <div className="text-sm text-[var(--medium-gray)]">Happy Patients</div>
+                  <div className="text-3xl mb-1">6</div>
+                  <div className="text-sm text-[var(--medium-gray)]">Sample provider profiles</div>
                 </div>
                 <div>
-                  <div className="text-3xl mb-1">1,200+</div>
-                  <div className="text-sm text-[var(--medium-gray)]">Expert Dentists</div>
+                  <div className="text-3xl mb-1">10</div>
+                  <div className="text-sm text-[var(--medium-gray)]">Example product screens</div>
                 </div>
                 <div>
-                  <div className="text-3xl mb-1">4.9★</div>
-                  <div className="text-sm text-[var(--medium-gray)]">Average Rating</div>
+                  <div className="text-3xl mb-1">0</div>
+                  <div className="text-sm text-[var(--medium-gray)]">Live clinic integrations</div>
                 </div>
               </div>
             </motion.div>
@@ -182,7 +184,7 @@ export function LandingPage() {
             </Badge>
             <h2 className="text-5xl mb-4">Transform Your Smile</h2>
             <p className="text-xl text-[var(--medium-gray)] max-w-2xl mx-auto">
-              World-class treatments tailored to your unique smile journey
+              Illustrative treatment descriptions created for the product preview
             </p>
           </div>
 
@@ -280,11 +282,11 @@ export function LandingPage() {
         <div className="max-w-[1400px] mx-auto px-6 lg:px-8">
           <div className="text-center mb-16">
             <Badge className="mb-4 bg-[var(--soft-beige)] text-[var(--dark-text)] border-0">
-              Success Stories
+              Example Testimonials
             </Badge>
             <h2 className="text-5xl mb-4">Smile Transformations</h2>
             <p className="text-xl text-[var(--medium-gray)] max-w-2xl mx-auto">
-              Real results from real patients who trusted SmileOS
+              Illustrative story cards for the product preview—not verified patient reviews or endorsements
             </p>
           </div>
 
@@ -327,6 +329,47 @@ export function LandingPage() {
       </section>
 
       {/* CTA Section */}
+      <section id="for-practices" className="scroll-mt-24 bg-[var(--soft-beige)]/40 py-20">
+        <div className="mx-auto max-w-[1200px] px-6 lg:px-8">
+          <Card className="grid gap-8 p-8 lg:grid-cols-2 lg:items-center lg:p-12">
+            <div>
+              <Badge className="mb-4 bg-white text-[var(--dark-text)]">For dental practices</Badge>
+              <h2 className="mb-4 text-4xl">Explore the practice platform preview</h2>
+              <p className="mb-6 text-[var(--medium-gray)]">
+                Review sample provider discovery, appointment intake, treatment journey, and patient account interfaces before discussing a practice-specific deployment.
+              </p>
+              <p className="text-sm text-[var(--medium-gray)]">
+                This preview is not a practice management system: it has no practice onboarding, patient accounts, connected schedule, clinical records, or payments.
+              </p>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Button asChild className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                <Link to="/discover">
+                  Explore Product Preview
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+              {salesEmailIsConfigured ? (
+                <Button variant="outline" asChild>
+                  <a href={`mailto:${salesEmail}?subject=${encodeURIComponent("SmileOS practice platform inquiry")}`}>
+                    Contact Sales
+                  </a>
+                </Button>
+              ) : (
+                <Button
+                  variant="outline"
+                  disabled
+                  title="Set VITE_SALES_EMAIL to enable the sales contact link."
+                >
+                  Sales contact not configured
+                </Button>
+              )}
+            </div>
+          </Card>
+        </div>
+      </section>
+
+      {/* CTA Section */}
       <section className="py-24 bg-gradient-to-br from-[var(--dark-text)] via-[var(--premium-blue)] to-[var(--dark-text)] text-white relative overflow-hidden">
         <div className="absolute inset-0 opacity-10" style={{
           backgroundImage: `radial-gradient(circle at 2px 2px, white 1px, transparent 0)`,
@@ -344,7 +387,7 @@ export function LandingPage() {
             </Badge>
             <h2 className="text-5xl mb-6 text-white">Ready for Your Dream Smile?</h2>
             <p className="text-xl text-white/80 mb-10 max-w-2xl mx-auto">
-              Join thousands of happy patients who transformed their lives with SmileOS
+              Explore sample provider profiles and the appointment preview flow
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild className="bg-white text-[var(--dark-text)] hover:bg-white/90 h-14 px-8">

@@ -8,92 +8,29 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from ".
 import { Link } from "react-router";
 import { Search, MapPin, Star, Clock, Filter, Award, Sparkles, Calendar } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
-
-const dentists = [
-  {
-    id: 1,
-    name: "Dr. Sarah Chen",
-    specialty: "Cosmetic Dentistry",
-    rating: 4.9,
-    reviews: 342,
-    experience: "15 years",
-    location: "Beverly Hills, CA",
-    price: "$$$",
-    available: "Next: Today 3:00 PM",
-    image: "photo-1594824476967-48c8b964273f",
-    certifications: ["Board Certified", "Cosmetic Expert"],
-  },
-  {
-    id: 2,
-    name: "Dr. Michael Rodriguez",
-    specialty: "Orthodontics",
-    rating: 4.8,
-    reviews: 289,
-    experience: "12 years",
-    location: "Manhattan, NY",
-    price: "$$$$",
-    available: "Next: Tomorrow 10:00 AM",
-    image: "photo-1612349317150-e413f6a5b16d",
-    certifications: ["Invisalign Expert", "Board Certified"],
-  },
-  {
-    id: 3,
-    name: "Dr. Emily Watson",
-    specialty: "Smile Design",
-    rating: 5.0,
-    reviews: 421,
-    experience: "18 years",
-    location: "Miami, FL",
-    price: "$$$$",
-    available: "Next: Today 5:00 PM",
-    image: "photo-1559839734-2b71ea197ec2",
-    certifications: ["Veneer Specialist", "Master Ceramist"],
-  },
-  {
-    id: 4,
-    name: "Dr. James Thompson",
-    specialty: "Implantology",
-    rating: 4.9,
-    reviews: 267,
-    experience: "20 years",
-    location: "San Francisco, CA",
-    price: "$$$",
-    available: "Next: Tomorrow 2:00 PM",
-    image: "photo-1622253692010-333f2da6031d",
-    certifications: ["Implant Expert", "Board Certified"],
-  },
-  {
-    id: 5,
-    name: "Dr. Lisa Anderson",
-    specialty: "Teeth Whitening",
-    rating: 4.7,
-    reviews: 198,
-    experience: "10 years",
-    location: "Chicago, IL",
-    price: "$$",
-    available: "Next: Today 4:00 PM",
-    image: "photo-1594824476967-48c8b964273f",
-    certifications: ["Whitening Specialist"],
-  },
-  {
-    id: 6,
-    name: "Dr. Robert Kim",
-    specialty: "Periodontics",
-    rating: 4.8,
-    reviews: 312,
-    experience: "14 years",
-    location: "Seattle, WA",
-    price: "$$$",
-    available: "Next: Tomorrow 9:00 AM",
-    image: "photo-1612349317150-e413f6a5b16d",
-    certifications: ["Gum Specialist", "Board Certified"],
-  },
-];
+import { filterProviders, providers } from "../data/providers";
 
 export function DentistDiscovery() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedSpecialty, setSelectedSpecialty] = useState("all");
   const [selectedLocation, setSelectedLocation] = useState("all");
+  const [quickFilters, setQuickFilters] = useState({
+    topRated: false,
+    availableToday: false,
+    certified: false,
+    premium: false,
+  });
+
+  const filteredDentists = filterProviders(providers, {
+    query: searchQuery,
+    specialty: selectedSpecialty,
+    location: selectedLocation,
+    quickFilters,
+  });
+
+  const toggleFilter = (filter: keyof typeof quickFilters) => {
+    setQuickFilters((current) => ({ ...current, [filter]: !current[filter] }));
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -109,7 +46,7 @@ export function DentistDiscovery() {
             </Badge>
             <h1 className="text-5xl mb-4">Find Your Perfect Dentist</h1>
             <p className="text-xl text-[var(--medium-gray)] max-w-2xl">
-              Connect with world-class dental professionals who understand your unique needs
+              Explore illustrative provider profiles. Names, credentials, ratings, locations, and availability are sample data.
             </p>
           </motion.div>
         </div>
@@ -129,7 +66,8 @@ export function DentistDiscovery() {
               <div className="md:col-span-2 relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-[var(--medium-gray)]" />
                 <Input
-                  placeholder="Search by name, specialty, or treatment..."
+                  aria-label="Search sample providers"
+                  placeholder="Search by name, specialty, location, or certification..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   className="pl-10 h-12 bg-input-background border-border/50"
@@ -138,7 +76,7 @@ export function DentistDiscovery() {
 
               {/* Specialty Filter */}
               <Select value={selectedSpecialty} onValueChange={setSelectedSpecialty}>
-                <SelectTrigger className="h-12 bg-input-background border-border/50">
+                <SelectTrigger className="h-12 bg-input-background border-border/50" aria-label="Filter by specialty">
                   <SelectValue placeholder="Specialty" />
                 </SelectTrigger>
                 <SelectContent>
@@ -148,12 +86,13 @@ export function DentistDiscovery() {
                   <SelectItem value="smile-design">Smile Design</SelectItem>
                   <SelectItem value="implantology">Implantology</SelectItem>
                   <SelectItem value="whitening">Teeth Whitening</SelectItem>
+                  <SelectItem value="periodontics">Periodontics</SelectItem>
                 </SelectContent>
               </Select>
 
               {/* Location Filter */}
               <Select value={selectedLocation} onValueChange={setSelectedLocation}>
-                <SelectTrigger className="h-12 bg-input-background border-border/50">
+                <SelectTrigger className="h-12 bg-input-background border-border/50" aria-label="Filter by location">
                   <SelectValue placeholder="Location" />
                 </SelectTrigger>
                 <SelectContent>
@@ -169,19 +108,19 @@ export function DentistDiscovery() {
 
             {/* Quick Filters */}
             <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant={quickFilters.topRated ? "default" : "outline"} size="sm" className="rounded-full" aria-pressed={quickFilters.topRated} onClick={() => toggleFilter("topRated")}>
                 <Star className="w-4 h-4 mr-2 text-[var(--champagne-gold)]" />
                 Top Rated
               </Button>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant={quickFilters.availableToday ? "default" : "outline"} size="sm" className="rounded-full" aria-pressed={quickFilters.availableToday} onClick={() => toggleFilter("availableToday")}>
                 <Clock className="w-4 h-4 mr-2" />
                 Available Today
               </Button>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant={quickFilters.certified ? "default" : "outline"} size="sm" className="rounded-full" aria-pressed={quickFilters.certified} onClick={() => toggleFilter("certified")}>
                 <Award className="w-4 h-4 mr-2" />
                 Certified
               </Button>
-              <Button variant="outline" size="sm" className="rounded-full">
+              <Button variant={quickFilters.premium ? "default" : "outline"} size="sm" className="rounded-full" aria-pressed={quickFilters.premium} onClick={() => toggleFilter("premium")}>
                 <Sparkles className="w-4 h-4 mr-2" />
                 Premium
               </Button>
@@ -191,18 +130,27 @@ export function DentistDiscovery() {
 
         {/* Results */}
         <div className="flex items-center justify-between mb-6">
-          <div className="text-[var(--medium-gray)]">
-            Showing {dentists.length} dentists
-          </div>
-          <Button variant="ghost" size="sm">
+          <p className="text-[var(--medium-gray)]" aria-live="polite" aria-atomic="true">
+            Showing {filteredDentists.length} of {providers.length} sample providers
+          </p>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => {
+              setSearchQuery("");
+              setSelectedSpecialty("all");
+              setSelectedLocation("all");
+              setQuickFilters({ topRated: false, availableToday: false, certified: false, premium: false });
+            }}
+          >
             <Filter className="w-4 h-4 mr-2" />
-            More Filters
+            Clear Filters
           </Button>
         </div>
 
         {/* Dentist Cards */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {dentists.map((dentist, index) => (
+          {filteredDentists.map((dentist, index) => (
             <motion.div
               key={dentist.id}
               initial={{ opacity: 0, y: 20 }}
@@ -210,7 +158,7 @@ export function DentistDiscovery() {
               transition={{ delay: index * 0.1 }}
             >
               <Card className="overflow-hidden hover:shadow-xl transition-all duration-300 group">
-                <Link to={`/dentist/${dentist.id}`}>
+                <Link to={`/dentist/${dentist.id}`} aria-label={`View profile for ${dentist.name}`}>
                   {/* Image */}
                   <div className="relative h-56 overflow-hidden">
                     <ImageWithFallback
@@ -279,19 +227,37 @@ export function DentistDiscovery() {
                       <div className="text-sm font-medium">{dentist.available}</div>
                     </div>
 
-                    {/* Action */}
-                    <Button className="w-full bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90" asChild>
-                      <Link to={`/book/${dentist.id}`}>
-                        <Calendar className="w-4 h-4 mr-2" />
-                        Book Appointment
-                      </Link>
-                    </Button>
                   </div>
                 </Link>
+                <div className="p-6 pt-0">
+                  <Button className="w-full bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90" asChild>
+                    <Link to={`/book/${dentist.id}`}>
+                      <Calendar className="w-4 h-4 mr-2" />
+                      Preview Booking
+                    </Link>
+                  </Button>
+                </div>
               </Card>
             </motion.div>
           ))}
         </div>
+        {filteredDentists.length === 0 && (
+          <Card className="mt-6 p-10 text-center">
+            <h2 className="mb-2">No providers match these filters</h2>
+            <p className="mb-5 text-[var(--medium-gray)]">Try a different search or clear the selected filters.</p>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setSearchQuery("");
+                setSelectedSpecialty("all");
+                setSelectedLocation("all");
+                setQuickFilters({ topRated: false, availableToday: false, certified: false, premium: false });
+              }}
+            >
+              Clear filters
+            </Button>
+          </Card>
+        )}
       </div>
     </div>
   );

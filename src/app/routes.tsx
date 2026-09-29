@@ -1,10 +1,12 @@
 import { createBrowserRouter } from "react-router";
 import { RootLayout } from "./components/RootLayout";
+import { RouteErrorBoundary } from "./components/RouteErrorBoundary";
 
 export const router = createBrowserRouter([
   {
     path: "/",
     Component: RootLayout,
+    ErrorBoundary: RouteErrorBoundary,
     children: [
       { index: true, lazy: async () => ({ Component: (await import("./pages/LandingPage")).LandingPage }) },
       { path: "discover", lazy: async () => ({ Component: (await import("./pages/DentistDiscovery")).DentistDiscovery }) },
@@ -16,6 +18,9 @@ export const router = createBrowserRouter([
       { path: "reports", lazy: async () => ({ Component: (await import("./pages/ReportsCenter")).ReportsCenter }) },
       { path: "payments", lazy: async () => ({ Component: (await import("./pages/PaymentDashboard")).PaymentDashboard }) },
       { path: "dashboard", lazy: async () => ({ Component: (await import("./pages/PatientDashboard")).PatientDashboard }) },
+      { path: "*", lazy: async () => ({ Component: (await import("./pages/NotFound")).NotFound }) },
     ],
   },
-]);
+], {
+  basename: import.meta.env.BASE_URL,
+});

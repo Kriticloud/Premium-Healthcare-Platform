@@ -4,44 +4,45 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { Download, Calendar, CreditCard, CheckCircle, Clock, AlertCircle } from "lucide-react";
+import { demoDate, demoMonth } from "../data/demoDates";
 
 const invoices = [
   {
-    id: "INV-2026-003",
-    date: "March 22, 2026",
+    id: "INV-SAMPLE-003",
+    date: demoDate(-7),
     description: "Smile Design - Preparation Phase",
     amount: 2850,
     status: "paid",
-    method: "Visa •••• 4242",
+    method: "Sample card •••• 4242",
   },
   {
-    id: "INV-2026-002",
-    date: "March 15, 2026",
+    id: "INV-SAMPLE-002",
+    date: demoDate(-14),
     description: "Initial Consultation & Digital Scan",
     amount: 450,
     status: "paid",
-    method: "Visa •••• 4242",
+    method: "Sample card •••• 4242",
   },
   {
-    id: "INV-2026-001",
-    date: "April 12, 2026",
-    description: "Final Placement - Balance Due",
-    amount: 5200,
+    id: "INV-SAMPLE-001",
+    date: demoDate(14),
+    description: "Next Treatment Installment",
+    amount: 2850,
     status: "upcoming",
-    method: "Auto-pay enabled",
+    method: "Sample method (not connected)",
   },
 ];
 
 const installments = [
-  { month: "March 2026", amount: 2850, status: "paid", date: "March 22, 2026" },
-  { month: "April 2026", amount: 2850, status: "upcoming", date: "April 12, 2026" },
-  { month: "May 2026", amount: 2800, status: "scheduled", date: "May 12, 2026" },
+  { month: demoMonth(14), amount: 2850, status: "upcoming", date: demoDate(14) },
+  { month: demoMonth(44), amount: 2850, status: "scheduled", date: demoDate(44) },
+  { month: demoMonth(74), amount: 2800, status: "scheduled", date: demoDate(74) },
 ];
 
 const paymentHistory = [
-  { id: 1, date: "March 22, 2026", description: "Treatment Payment", amount: 2850, status: "completed" },
-  { id: 2, date: "March 15, 2026", description: "Consultation Fee", amount: 450, status: "completed" },
-  { id: 3, date: "February 28, 2026", description: "Deposit Payment", amount: 1500, status: "completed" },
+  { id: 1, date: demoDate(-7), description: "Treatment Payment", amount: 2850, status: "completed" },
+  { id: 2, date: demoDate(-14), description: "Consultation Fee", amount: 450, status: "completed" },
+  { id: 3, date: demoDate(-30), description: "Deposit Payment", amount: 1500, status: "completed" },
 ];
 
 export function PaymentDashboard() {
@@ -76,7 +77,7 @@ export function PaymentDashboard() {
             <div className="text-3xl text-green-600 mb-1">${totalPaid.toLocaleString()}</div>
             <div className="flex items-center text-xs text-green-600">
               <CheckCircle className="w-3 h-3 mr-1" />
-              All caught up
+              Sample data
             </div>
           </Card>
 
@@ -85,7 +86,7 @@ export function PaymentDashboard() {
             <div className="text-3xl text-[var(--champagne-gold)] mb-1">${totalDue.toLocaleString()}</div>
             <div className="flex items-center text-xs text-[var(--medium-gray)]">
               <Clock className="w-3 h-3 mr-1" />
-              2 payments remaining
+              Sample installment plan
             </div>
           </Card>
 
@@ -94,7 +95,7 @@ export function PaymentDashboard() {
             <div className="text-3xl text-[var(--dark-text)] mb-1">$2,850</div>
             <div className="flex items-center text-xs text-[var(--medium-gray)]">
               <Calendar className="w-3 h-3 mr-1" />
-              April 12, 2026
+              {demoDate(14)}
             </div>
           </Card>
 
@@ -103,7 +104,7 @@ export function PaymentDashboard() {
             <div className="text-3xl text-[var(--dark-text)] mb-1">$13,300</div>
             <div className="flex items-center text-xs text-[var(--medium-gray)]">
               <CreditCard className="w-3 h-3 mr-1" />
-              Auto-pay enabled
+              Demo value only
             </div>
           </Card>
         </motion.div>
@@ -176,13 +177,13 @@ export function PaymentDashboard() {
                         </div>
 
                         <div className="flex gap-2 ml-6">
-                          <Button variant="outline" size="sm">
+                          <Button variant="outline" size="sm" disabled title="Invoice downloads are not connected in this preview.">
                             <Download className="w-4 h-4 mr-2" />
-                            Download
+                            Preview only
                           </Button>
                           {invoice.status === "upcoming" && (
-                            <Button size="sm" className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                              Pay Now
+                            <Button size="sm" disabled title="Payment processing is not connected. No payment can be made in this preview." className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                              Payments unavailable
                             </Button>
                           )}
                         </div>
@@ -199,9 +200,9 @@ export function PaymentDashboard() {
                 <div className="flex items-start justify-between mb-6">
                   <div>
                     <h3 className="mb-2">Your Payment Plan</h3>
-                    <p className="text-[var(--medium-gray)]">3 monthly installments of approximately $2,850</p>
+                    <p className="text-[var(--medium-gray)]">3 illustrative installments totaling $8,500</p>
                   </div>
-                  <Button variant="outline" size="sm">
+                  <Button variant="outline" size="sm" disabled title="Payment plans cannot be changed in this preview.">
                     Modify Plan
                   </Button>
                 </div>
@@ -244,8 +245,8 @@ export function PaymentDashboard() {
                         <div className="text-right">
                           <div className="text-2xl mb-1">${installment.amount.toLocaleString()}</div>
                           {installment.status === "upcoming" && (
-                            <Button size="sm" className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                              Pay Now
+                            <Button size="sm" disabled title="Payment processing is not connected. No payment can be made in this preview." className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                              Payments unavailable
                             </Button>
                           )}
                         </div>
@@ -261,9 +262,9 @@ export function PaymentDashboard() {
                     <CreditCard className="w-5 h-5 text-[var(--premium-blue)]" />
                   </div>
                   <div>
-                    <h4 className="mb-2">Auto-Pay Enabled</h4>
+                    <h4 className="mb-2">Sample Payment Method</h4>
                     <p className="text-sm text-[var(--medium-gray)]">
-                      Your payments will be automatically charged to Visa •••• 4242 on the due date.
+                      Visa •••• 4242 is example data only. No card is configured and no payment will be charged.
                     </p>
                   </div>
                 </div>
@@ -293,7 +294,7 @@ export function PaymentDashboard() {
                         </div>
                         <div className="flex items-center gap-6">
                           <div className="text-2xl">${payment.amount.toLocaleString()}</div>
-                          <Button variant="ghost" size="sm">
+                          <Button variant="ghost" size="sm" disabled title="Receipt downloads are not connected in this preview." aria-label={`Download sample receipt for ${payment.description}`}>
                             <Download className="w-4 h-4" />
                           </Button>
                         </div>
@@ -304,7 +305,7 @@ export function PaymentDashboard() {
               </div>
 
               <div className="mt-8 text-center">
-                <Button variant="outline">Load More History</Button>
+                <Button variant="outline" disabled title="This preview only includes sample payment history.">Sample history only</Button>
               </div>
             </TabsContent>
 
@@ -316,9 +317,9 @@ export function PaymentDashboard() {
                 </div>
                 <h3 className="mb-2">Download All Receipts</h3>
                 <p className="text-[var(--medium-gray)] mb-6">Get a complete record of all your payments</p>
-                <Button className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                <Button disabled title="Receipt downloads are not connected in this preview." className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
                   <Download className="w-4 h-4 mr-2" />
-                  Download ZIP Archive
+                  Downloads unavailable
                 </Button>
               </Card>
             </TabsContent>

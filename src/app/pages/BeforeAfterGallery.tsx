@@ -3,9 +3,10 @@ import { motion } from "motion/react";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
+import { Tabs, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
 import { Star, ChevronLeft, ChevronRight, Sparkles } from "lucide-react";
+import { Link } from "react-router";
 
 const transformations = [
   {
@@ -72,7 +73,15 @@ const transformations = [
 
 export function BeforeAfterGallery() {
   const [selectedTransformation, setSelectedTransformation] = useState<number | null>(null);
+  const [treatmentFilter, setTreatmentFilter] = useState("all");
   const [sliderPosition, setSliderPosition] = useState(50);
+  const filteredTransformations = transformations.filter((transformation) => {
+    const treatment = transformation.treatment.toLowerCase();
+    if (treatmentFilter === "all") return true;
+    if (treatmentFilter === "orthodontics") return treatment.includes("invisalign");
+    if (treatmentFilter === "smile-design") return treatment.includes("smile") || treatment.includes("makeover");
+    return treatment.includes(treatmentFilter);
+  });
 
   return (
     <div className="min-h-screen bg-background">
@@ -82,16 +91,19 @@ export function BeforeAfterGallery() {
           animate={{ opacity: 1, y: 0 }}
         >
           <Badge className="mb-4 bg-[var(--soft-beige)] text-[var(--dark-text)] border-0">
-            Success Stories
+            Example Stories
           </Badge>
           <h1 className="text-5xl mb-4">Before & After Gallery</h1>
-          <p className="text-xl text-[var(--medium-gray)] mb-8">
-            Real transformations from real patients who trusted SmileOS
+          <p className="text-xl text-[var(--medium-gray)] mb-4">
+            Explore example transformations in this product preview
+          </p>
+          <p className="mb-8 text-sm text-[var(--medium-gray)]" role="note">
+            These sample portraits and stories are illustrative demo content—not verified patients, clinical evidence, or real treatment results.
           </p>
         </motion.div>
 
         {/* Filter Tabs */}
-        <Tabs defaultValue="all" className="mb-12">
+        <Tabs value={treatmentFilter} onValueChange={setTreatmentFilter} className="mb-12">
           <TabsList className="bg-card border">
             <TabsTrigger value="all">All Treatments</TabsTrigger>
             <TabsTrigger value="whitening">Whitening</TabsTrigger>
@@ -103,7 +115,7 @@ export function BeforeAfterGallery() {
 
         {/* Gallery Grid */}
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6 mb-16">
-          {transformations.map((transformation, index) => (
+          {filteredTransformations.map((transformation, index) => (
             <motion.div
               key={transformation.id}
               initial={{ opacity: 0, y: 20 }}
@@ -113,6 +125,15 @@ export function BeforeAfterGallery() {
               <Card 
                 className="overflow-hidden cursor-pointer hover:shadow-2xl transition-all duration-300 group"
                 onClick={() => setSelectedTransformation(transformation.id)}
+                role="button"
+                tabIndex={0}
+                aria-label={`View sample story: ${transformation.treatment}`}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") {
+                    event.preventDefault();
+                    setSelectedTransformation(transformation.id);
+                  }
+                }}
               >
                 {/* Before/After Images */}
                 <div className="relative h-80 overflow-hidden">
@@ -151,9 +172,9 @@ export function BeforeAfterGallery() {
                   
                   {/* Hover Overlay */}
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-6">
-                    <Button className="bg-white text-[var(--dark-text)] hover:bg-white/90 w-full">
-                      View Full Story
-                    </Button>
+                    <span className="block w-full rounded-md bg-white px-4 py-2 text-center text-sm font-medium text-[var(--dark-text)]">
+                      View Sample Story
+                    </span>
                   </div>
                 </div>
 
@@ -185,6 +206,28 @@ export function BeforeAfterGallery() {
             </motion.div>
           ))}
         </div>
+        {selectedTransformation !== null && (
+          <Card className="mb-16 p-8" aria-live="polite">
+            {(() => {
+              const selected = transformations.find((item) => item.id === selectedTransformation);
+              if (!selected) return null;
+
+              return (
+                <>
+                  <div className="mb-4 flex items-start justify-between gap-4">
+                    <div>
+                      <Badge variant="outline" className="mb-3">{selected.treatment} · Sample story</Badge>
+                      <h2 className="text-3xl">{selected.patient}</h2>
+                    </div>
+                    <Button variant="outline" onClick={() => setSelectedTransformation(null)}>Close</Button>
+                  </div>
+                  <p className="text-[var(--medium-gray)]">{selected.story}</p>
+                  <p className="mt-3 text-sm text-[var(--medium-gray)]">Illustrative example only. Not a verified patient or outcome.</p>
+                </>
+              );
+            })()}
+          </Card>
+        )}
 
         {/* Featured Comparison Slider */}
         <motion.div
@@ -248,6 +291,8 @@ export function BeforeAfterGallery() {
                 {/* Interactive Overlay */}
                 <input
                   type="range"
+                  aria-label="Before and after comparison"
+                  aria-valuetext={`${sliderPosition}% before image visible`}
                   min="0"
                   max="100"
                   value={sliderPosition}
@@ -275,10 +320,10 @@ export function BeforeAfterGallery() {
           <Card className="p-12 bg-gradient-to-br from-[var(--soft-beige)] to-white">
             <h2 className="text-4xl mb-4">Ready for Your Transformation?</h2>
             <p className="text-xl text-[var(--medium-gray)] mb-8 max-w-2xl mx-auto">
-              Start your smile journey today with a free consultation
+              Explore the sample scheduling flow. No appointment will be reserved.
             </p>
-            <Button size="lg" className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-              Book Free Consultation
+            <Button size="lg" className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90" asChild>
+              <Link to="/discover">Explore Providers</Link>
             </Button>
           </Card>
         </motion.div>

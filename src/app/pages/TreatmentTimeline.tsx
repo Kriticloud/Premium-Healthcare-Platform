@@ -4,12 +4,14 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Progress } from "../components/ui/progress";
 import { CheckCircle, Clock, Calendar, FileText, AlertCircle } from "lucide-react";
+import { demoDate } from "../data/demoDates";
+import { Link } from "react-router";
 
 const timeline = [
   {
     id: 1,
     title: "Initial Consultation",
-    date: "March 15, 2026",
+    date: demoDate(-42),
     status: "completed",
     description: "Comprehensive examination and treatment planning",
     notes: "Digital smile preview completed. Treatment plan approved.",
@@ -17,7 +19,7 @@ const timeline = [
   {
     id: 2,
     title: "Preparation Phase",
-    date: "March 22, 2026",
+    date: demoDate(-28),
     status: "completed",
     description: "Tooth preparation and impressions taken",
     notes: "Temporary veneers placed. No sensitivity reported.",
@@ -25,7 +27,7 @@ const timeline = [
   {
     id: 3,
     title: "Mid-Treatment Check",
-    date: "April 5, 2026",
+    date: demoDate(-1),
     status: "current",
     description: "Progress evaluation and adjustments",
     notes: "Healing progressing well. Ready for final placement.",
@@ -33,7 +35,7 @@ const timeline = [
   {
     id: 4,
     title: "Final Placement",
-    date: "April 12, 2026",
+    date: demoDate(14),
     status: "upcoming",
     description: "Permanent restoration placement",
     notes: "Scheduled for final veneer bonding.",
@@ -41,7 +43,7 @@ const timeline = [
   {
     id: 5,
     title: "Follow-up Visit",
-    date: "May 10, 2026",
+    date: demoDate(42),
     status: "upcoming",
     description: "Post-treatment evaluation",
     notes: "Final check and bite adjustment if needed.",
@@ -155,8 +157,8 @@ export function TreatmentTimeline() {
 
                     {item.status === "current" && (
                       <div className="mt-4 pt-4 border-t border-border">
-                        <Button className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                          View Details
+                        <Button disabled title="Milestone details are not connected in this preview." className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                          Sample milestone
                         </Button>
                       </div>
                     )}
@@ -182,13 +184,15 @@ export function TreatmentTimeline() {
               <div className="flex-1">
                 <h3 className="mb-2">Next Appointment</h3>
                 <p className="text-[var(--medium-gray)] mb-4">
-                  Your final placement is scheduled for April 12, 2026 at 2:00 PM
+                  Sample schedule: final placement on {demoDate(14)} at 2:00 PM
                 </p>
                 <div className="flex gap-3">
-                  <Button className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                    View Appointment
+                  <Button asChild className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
+                    <Link to="/book/1">Preview Appointment</Link>
                   </Button>
-                  <Button variant="outline">Reschedule</Button>
+                  <Button variant="outline" asChild>
+                    <Link to="/discover">Explore Providers</Link>
+                  </Button>
                 </div>
               </div>
             </div>

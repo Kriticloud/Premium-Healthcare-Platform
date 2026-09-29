@@ -4,30 +4,42 @@ import { Badge } from "../components/ui/badge";
 import { Button } from "../components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/ui/tabs";
 import { FileText, Download, Eye, Share2, Calendar, Image, FileArchive } from "lucide-react";
+import type { LucideIcon } from "lucide-react";
+import { demoDate } from "../data/demoDates";
 
-const reports = {
+type Report = {
+  id: number;
+  name: string;
+  date: string;
+  doctor?: string;
+  type: string;
+  size?: string;
+  pages?: number;
+};
+
+const reports: Record<"prescriptions" | "scans" | "xrays" | "plans", Report[]> = {
   prescriptions: [
-    { id: 1, name: "Post-Procedure Medications", date: "March 22, 2026", doctor: "Dr. Sarah Chen", type: "Prescription" },
-    { id: 2, name: "Pain Management Plan", date: "March 15, 2026", doctor: "Dr. Sarah Chen", type: "Prescription" },
+    { id: 1, name: "Post-Procedure Medications", date: demoDate(-3), doctor: "Dr. Sarah Chen", type: "Prescription" },
+    { id: 2, name: "Pain Management Plan", date: demoDate(-10), doctor: "Dr. Sarah Chen", type: "Prescription" },
   ],
   scans: [
-    { id: 3, name: "Digital Smile Preview", date: "March 15, 2026", type: "3D Scan", size: "12.4 MB" },
-    { id: 4, name: "Intraoral Scan - Upper Arch", date: "March 15, 2026", type: "3D Scan", size: "8.2 MB" },
-    { id: 5, name: "Intraoral Scan - Lower Arch", date: "March 15, 2026", type: "3D Scan", size: "7.9 MB" },
+    { id: 3, name: "Digital Smile Preview", date: demoDate(-10), type: "3D Scan", size: "12.4 MB" },
+    { id: 4, name: "Intraoral Scan - Upper Arch", date: demoDate(-10), type: "3D Scan", size: "8.2 MB" },
+    { id: 5, name: "Intraoral Scan - Lower Arch", date: demoDate(-10), type: "3D Scan", size: "7.9 MB" },
   ],
   xrays: [
-    { id: 6, name: "Panoramic X-Ray", date: "March 15, 2026", type: "X-Ray", size: "3.1 MB" },
-    { id: 7, name: "Bitewing X-Rays (Right)", date: "March 15, 2026", type: "X-Ray", size: "1.8 MB" },
-    { id: 8, name: "Bitewing X-Rays (Left)", date: "March 15, 2026", type: "X-Ray", size: "1.7 MB" },
+    { id: 6, name: "Panoramic X-Ray", date: demoDate(-10), type: "X-Ray", size: "3.1 MB" },
+    { id: 7, name: "Bitewing X-Rays (Right)", date: demoDate(-10), type: "X-Ray", size: "1.8 MB" },
+    { id: 8, name: "Bitewing X-Rays (Left)", date: demoDate(-10), type: "X-Ray", size: "1.7 MB" },
   ],
   plans: [
-    { id: 9, name: "Smile Design Treatment Plan", date: "March 15, 2026", type: "Treatment Plan", pages: 8 },
-    { id: 10, name: "Cost Breakdown & Timeline", date: "March 15, 2026", type: "Financial Plan", pages: 3 },
-    { id: 11, name: "Post-Treatment Care Guide", date: "March 22, 2026", type: "Care Instructions", pages: 5 },
+    { id: 9, name: "Smile Design Treatment Plan", date: demoDate(-10), type: "Treatment Plan", pages: 8 },
+    { id: 10, name: "Cost Breakdown & Timeline", date: demoDate(-10), type: "Financial Plan", pages: 3 },
+    { id: 11, name: "Post-Treatment Care Guide", date: demoDate(-3), type: "Care Instructions", pages: 5 },
   ],
 };
 
-function ReportCard({ report, icon: Icon }: { report: any; icon: any }) {
+function ReportCard({ report, icon: Icon }: { report: Report; icon: LucideIcon }) {
   return (
     <Card className="p-6 hover:shadow-lg transition-all group">
       <div className="flex items-start gap-4">
@@ -52,15 +64,15 @@ function ReportCard({ report, icon: Icon }: { report: any; icon: any }) {
           </Badge>
 
           <div className="flex gap-2">
-            <Button size="sm" variant="outline" className="flex-1">
+            <Button size="sm" variant="outline" className="flex-1" disabled title="Document preview is not available for sample records.">
               <Eye className="w-4 h-4 mr-2" />
-              View
+              Preview only
             </Button>
-            <Button size="sm" variant="outline" className="flex-1">
+            <Button size="sm" variant="outline" className="flex-1" disabled title="Document downloads are not connected in this preview.">
               <Download className="w-4 h-4 mr-2" />
-              Download
+              Download unavailable
             </Button>
-            <Button size="sm" variant="ghost">
+            <Button size="sm" variant="ghost" disabled title="Secure document sharing is not connected." aria-label={`Sharing unavailable for ${report.name}`}>
               <Share2 className="w-4 h-4" />
             </Button>
           </div>
@@ -83,7 +95,7 @@ export function ReportsCenter() {
           </Badge>
           <h1 className="text-5xl mb-4">Reports Center</h1>
           <p className="text-xl text-[var(--medium-gray)] mb-8">
-            Access all your dental records, scans, and treatment plans in one place
+            Explore sample document layouts. This preview does not contain patient records.
           </p>
         </motion.div>
 
@@ -94,23 +106,23 @@ export function ReportsCenter() {
           transition={{ delay: 0.1 }}
           className="grid md:grid-cols-4 gap-4 mb-12"
         >
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="p-6 text-center">
             <div className="w-12 h-12 rounded-full bg-[var(--champagne-gold)]/10 flex items-center justify-center mx-auto mb-3">
               <Download className="w-6 h-6 text-[var(--champagne-gold)]" />
             </div>
-            <div className="font-medium mb-1">Download All</div>
-            <div className="text-sm text-[var(--medium-gray)]">Export everything</div>
+            <div className="font-medium mb-1">Sample documents</div>
+            <div className="text-sm text-[var(--medium-gray)]">Downloads are not connected</div>
           </Card>
 
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="p-6 text-center">
             <div className="w-12 h-12 rounded-full bg-[var(--premium-blue)]/10 flex items-center justify-center mx-auto mb-3">
               <Share2 className="w-6 h-6 text-[var(--premium-blue)]" />
             </div>
-            <div className="font-medium mb-1">Share Records</div>
-            <div className="text-sm text-[var(--medium-gray)]">Send to doctor</div>
+            <div className="font-medium mb-1">Secure sharing</div>
+            <div className="text-sm text-[var(--medium-gray)]">Not enabled in this preview</div>
           </Card>
 
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="p-6 text-center">
             <div className="w-12 h-12 rounded-full bg-green-500/10 flex items-center justify-center mx-auto mb-3">
               <FileArchive className="w-6 h-6 text-green-600" />
             </div>
@@ -118,7 +130,7 @@ export function ReportsCenter() {
             <div className="text-sm text-[var(--medium-gray)]">Organize files</div>
           </Card>
 
-          <Card className="p-6 text-center hover:shadow-lg transition-shadow cursor-pointer">
+          <Card className="p-6 text-center">
             <div className="w-12 h-12 rounded-full bg-purple-500/10 flex items-center justify-center mx-auto mb-3">
               <Image className="w-6 h-6 text-purple-600" />
             </div>
@@ -213,14 +225,9 @@ export function ReportsCenter() {
             <div className="flex items-center justify-between mb-4">
               <div>
                 <h3 className="mb-1">Storage Usage</h3>
-                <p className="text-[var(--medium-gray)]">42.3 MB of unlimited storage used</p>
+                <p className="text-[var(--medium-gray)]">Storage is not connected in this preview.</p>
               </div>
-              <Badge className="bg-green-500/10 text-green-600 border-green-500/30">
-                Premium Plan
-              </Badge>
-            </div>
-            <div className="h-2 bg-[var(--soft-beige)] rounded-full overflow-hidden">
-              <div className="h-full bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] w-[5%]" />
+              <Badge variant="outline">Sample interface</Badge>
             </div>
           </Card>
         </motion.div>

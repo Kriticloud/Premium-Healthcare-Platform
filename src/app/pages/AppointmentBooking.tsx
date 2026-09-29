@@ -1,42 +1,111 @@
-import { useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
 import { motion } from "motion/react";
 import { Button } from "../components/ui/button";
 import { Card } from "../components/ui/card";
 import { Badge } from "../components/ui/badge";
 import { Label } from "../components/ui/label";
-import { Input } from "../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../components/ui/select";
 import { RadioGroup, RadioGroupItem } from "../components/ui/radio-group";
 import { Calendar } from "../components/ui/calendar";
-import { Link } from "react-router";
-import { Calendar as CalendarIcon, Clock, Video, MapPin, CheckCircle, ArrowRight, Mail, Phone, Sparkles, User } from "lucide-react";
+import { Link, useParams, useSearchParams } from "react-router";
+import { Calendar as CalendarIcon, Clock, Video, MapPin, CheckCircle, ArrowRight, Sparkles, User } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { getProviderById } from "../data/providers";
+import { demoAppointmentTimes, demoTreatmentInterests, hasDemoAppointmentConflict } from "../data/demoAppointments";
+import { useDemoAppointments } from "../data/useDemoAppointments";
 
-const dentist = {
-  name: "Dr. Sarah Chen",
-  specialty: "Cosmetic Dentistry",
-  image: "photo-1594824476967-48c8b964273f",
-  location: "Beverly Hills, CA",
+const treatmentLabels: Record<string, string> = {
+  whitening: "Teeth Whitening",
+  veneers: "Porcelain Veneers",
+  "smile-design": "Smile Design",
+  orthodontics: "Orthodontics",
+  implants: "Dental Implants",
+  general: "General Consultation",
 };
 
-const timeSlots = [
-  "9:00 AM", "9:30 AM", "10:00 AM", "10:30 AM", "11:00 AM", "11:30 AM",
-  "1:00 PM", "1:30 PM", "2:00 PM", "2:30 PM", "3:00 PM", "3:30 PM",
-  "4:00 PM", "4:30 PM", "5:00 PM"
-];
+function parseDateParameter(value: string | null): Date | undefined {
+  if (!value || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return undefined;
+  const [year, month, day] = value.split("-").map(Number);
+  const date = new Date(year, month - 1, day);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  if (date < today || date.getFullYear() !== year || date.getMonth() !== month - 1 || date.getDate() !== day) {
+    return undefined;
+  }
+  return date;
+}
 
 export function AppointmentBooking() {
-  const [date, setDate] = useState<Date | undefined>();
-  const [selectedTime, setSelectedTime] = useState("");
-  const [consultationType, setConsultationType] = useState("in-person");
+  const { dentistId } = useParams();
+  const dentist = getProviderById(dentistId);
+  const [searchParams] = useSearchParams();
+  const rescheduleId = searchParams.get("reschedule") ?? undefined;
+  const { appointments, error: storageError, ready, save } = useDemoAppointments();
+  const [date, setDate] = useState<Date | undefined>(() => parseDateParameter(searchParams.get("date")));
+  const [selectedTime, setSelectedTime] = useState(() => {
+    const time = searchParams.get("time") ?? "";
+    return demoAppointmentTimes.includes(time) ? time : "";
+  });
+  const [consultationType, setConsultationType] = useState<"in-person" | "virtual">("in-person");
   const [treatment, setTreatment] = useState("");
-  const [patient, setPatient] = useState({ firstName: "", lastName: "", email: "", phone: "" });
   const [step, setStep] = useState(1);
+  const [saveError, setSaveError] = useState<string | null>(null);
+  const rescheduleAppointment = appointments.find((appointment) =>
+    appointment.id === rescheduleId
+    && appointment.status === "scheduled"
+    && appointment.providerId === dentist?.id,
+  );
+  const invalidReschedule = ready && Boolean(rescheduleId) && !rescheduleAppointment;
+  const selectedDateKey = date
+    ? `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`
+    : "";
+  const selectedSlotTaken = Boolean(dentist && selectedTime && selectedDateKey && hasDemoAppointmentConflict(
+    appointments,
+    {
+      providerId: dentist.id,
+      date: selectedDateKey,
+      time: selectedTime,
+      consultationType,
+      treatment: treatment || "general",
+    },
+    rescheduleId,
+  ));
 
-  const handleBooking = (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setStep(4);
+  useEffect(() => {
+    if (!rescheduleAppointment) return;
+    setDate(parseDateParameter(rescheduleAppointment.date));
+    setSelectedTime(rescheduleAppointment.time);
+    setConsultationType(rescheduleAppointment.consultationType);
+    setTreatment(rescheduleAppointment.treatment);
+  }, [rescheduleAppointment]);
+
+  const handleBooking = () => {
+    if (!dentist || !date || !selectedTime || !treatment || !ready || invalidReschedule) return;
+    try {
+      save({
+        providerId: dentist.id,
+        date: selectedDateKey,
+        time: selectedTime,
+        consultationType,
+        treatment,
+      }, rescheduleId);
+      setSaveError(null);
+      setStep(4);
+    } catch (cause) {
+      setSaveError(cause instanceof Error ? cause.message : "Could not save this demo appointment.");
+    }
   };
+
+  if (!dentist) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <h1 className="mb-4 text-3xl">Provider not found</h1>
+        <p className="mb-6 text-[var(--medium-gray)]">Choose a sample provider before previewing an appointment.</p>
+        <Button asChild><Link to="/discover">Browse providers</Link></Button>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
@@ -48,15 +117,21 @@ export function AppointmentBooking() {
           className="mb-8"
         >
           <Badge className="mb-4 bg-[var(--soft-beige)] text-[var(--dark-text)] border-0">
-            Book Appointment
+            Appointment Demo
           </Badge>
           <h1 className="text-5xl mb-4">Schedule Your Visit</h1>
           <p className="text-xl text-[var(--medium-gray)]">
             Choose your preferred date, time, and consultation type
           </p>
           <p className="mt-4 rounded-lg border border-[var(--premium-blue)]/20 bg-[var(--premium-blue)]/5 p-4 text-sm text-[var(--medium-gray)]" role="note">
-            Interactive demo only. Do not enter real patient information. Nothing you enter is sent to a clinic or saved.
+            Interactive demo only. Do not enter real patient information. Your sample selection is saved only in this browser and is not sent to a clinic.
           </p>
+          {storageError && <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-700" role="alert">{storageError}</p>}
+          {invalidReschedule && (
+            <p className="mt-3 rounded-lg border border-red-500/30 bg-red-500/5 p-4 text-sm text-red-700" role="alert">
+              This sample appointment can no longer be rescheduled. Return to the dashboard and choose an active appointment.
+            </p>
+          )}
         </motion.div>
 
         {step < 4 ? (
@@ -110,17 +185,34 @@ export function AppointmentBooking() {
                       <div>
                         <h3 className="mb-4">Select Time</h3>
                         <div className="grid grid-cols-3 gap-3">
-                          {timeSlots.map((time) => (
-                            <Button
-                              key={time}
-                              variant={selectedTime === time ? "default" : "outline"}
-                              className={selectedTime === time ? "bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white" : ""}
-                              onClick={() => setSelectedTime(time)}
-                              aria-pressed={selectedTime === time}
-                            >
-                              <Clock className="w-4 h-4 mr-2" />
-                              {time}
-                            </Button>
+                          {demoAppointmentTimes.map((time) => (
+                            (() => {
+                              const isTaken = Boolean(date && hasDemoAppointmentConflict(
+                                appointments,
+                                {
+                                  providerId: dentist.id,
+                                  date: selectedDateKey,
+                                  time,
+                                  consultationType,
+                                  treatment: treatment || "general",
+                                },
+                                rescheduleId,
+                              ));
+                              return (
+                                <Button
+                                  key={time}
+                                  variant={selectedTime === time ? "default" : "outline"}
+                                  className={selectedTime === time ? "bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white" : ""}
+                                  onClick={() => setSelectedTime(time)}
+                                  aria-pressed={selectedTime === time}
+                                  disabled={isTaken}
+                                  title={isTaken ? "Already selected for another sample appointment" : undefined}
+                                >
+                                  <Clock className="w-4 h-4 mr-2" />
+                                  {time}
+                                </Button>
+                              );
+                            })()
                           ))}
                         </div>
                       </div>
@@ -129,7 +221,7 @@ export function AppointmentBooking() {
                         size="lg" 
                         className="w-full bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90"
                         onClick={() => setStep(2)}
-                        disabled={!date || !selectedTime}
+                        disabled={!date || !selectedTime || selectedSlotTaken || !ready}
                       >
                         Continue
                         <ArrowRight className="ml-2 w-5 h-5" />
@@ -142,7 +234,10 @@ export function AppointmentBooking() {
                     <div className="space-y-6">
                       <div>
                         <h3 className="mb-4">Choose Consultation Type</h3>
-                        <RadioGroup value={consultationType} onValueChange={setConsultationType}>
+                        <RadioGroup
+                          value={consultationType}
+                          onValueChange={(value) => setConsultationType(value === "virtual" ? "virtual" : "in-person")}
+                        >
                           <div className="space-y-4">
                             <Card className={`p-6 cursor-pointer transition-all ${
                               consultationType === "in-person" ? "border-[var(--champagne-gold)] bg-[var(--champagne-gold)]/5" : ""
@@ -188,12 +283,11 @@ export function AppointmentBooking() {
                             <SelectValue placeholder="Select treatment" />
                           </SelectTrigger>
                           <SelectContent>
-                            <SelectItem value="whitening">Teeth Whitening</SelectItem>
-                            <SelectItem value="veneers">Porcelain Veneers</SelectItem>
-                            <SelectItem value="smile-design">Smile Design</SelectItem>
-                            <SelectItem value="orthodontics">Orthodontics</SelectItem>
-                            <SelectItem value="implants">Dental Implants</SelectItem>
-                            <SelectItem value="general">General Consultation</SelectItem>
+                            {demoTreatmentInterests.map((interest) => (
+                              <SelectItem key={interest} value={interest}>
+                                {treatmentLabels[interest]}
+                              </SelectItem>
+                            ))}
                           </SelectContent>
                         </Select>
                       </div>
@@ -215,7 +309,7 @@ export function AppointmentBooking() {
                           size="lg" 
                           className="flex-1 bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90"
                           onClick={() => setStep(3)}
-                          disabled={!treatment}
+                          disabled={!treatment || invalidReschedule}
                         >
                           Continue
                           <ArrowRight className="ml-2 w-5 h-5" />
@@ -229,84 +323,39 @@ export function AppointmentBooking() {
                     </div>
                   )}
 
-                  {/* Step 3: Patient Information */}
+                  {/* Step 3: Review the sample request */}
                   {step === 3 && (
-                    <form className="space-y-6" onSubmit={handleBooking}>
+                    <div className="space-y-6">
                       <div>
-                        <h3 className="mb-2">Contact Details</h3>
+                        <h3 className="mb-2">Review Your Demo Request</h3>
                         <p className="text-sm text-[var(--medium-gray)]">
-                          Use fictional details for this preview. This form does not submit or store your information.
+                          No personal or contact information is needed for this preview. Review the fictional sample details below.
                         </p>
                       </div>
-                      
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="firstName">First Name</Label>
-                          <Input
-                            id="firstName"
-                            name="firstName"
-                            autoComplete="given-name"
-                            placeholder="Alex"
-                            className="mt-2"
-                            value={patient.firstName}
-                            onChange={(event) => setPatient({ ...patient, firstName: event.target.value })}
-                            required
-                          />
+                      <Card className="space-y-3 bg-[var(--soft-beige)]/50 p-5">
+                        <div className="flex justify-between gap-4">
+                          <span className="text-sm text-[var(--medium-gray)]">Provider</span>
+                          <span className="text-right font-medium">{dentist.name}</span>
                         </div>
-                        <div>
-                          <Label htmlFor="lastName">Last Name</Label>
-                          <Input
-                            id="lastName"
-                            name="lastName"
-                            autoComplete="family-name"
-                            placeholder="Morgan"
-                            className="mt-2"
-                            value={patient.lastName}
-                            onChange={(event) => setPatient({ ...patient, lastName: event.target.value })}
-                            required
-                          />
+                        <div className="flex justify-between gap-4">
+                          <span className="text-sm text-[var(--medium-gray)]">Selected date</span>
+                          <span className="text-right font-medium">{date?.toLocaleDateString()}</span>
                         </div>
-                      </div>
-
-                      <div className="grid md:grid-cols-2 gap-4">
-                        <div>
-                          <Label htmlFor="email">Email</Label>
-                          <Input
-                            id="email"
-                            name="email"
-                            type="email"
-                            autoComplete="email"
-                            placeholder="alex@example.com"
-                            className="mt-2"
-                            value={patient.email}
-                            onChange={(event) => setPatient({ ...patient, email: event.target.value })}
-                            required
-                          />
+                        <div className="flex justify-between gap-4">
+                          <span className="text-sm text-[var(--medium-gray)]">Selected time</span>
+                          <span className="text-right font-medium">{selectedTime}</span>
                         </div>
-                        <div>
-                          <Label htmlFor="phone">Phone Number</Label>
-                          <Input
-                            id="phone"
-                            name="phone"
-                            type="tel"
-                            autoComplete="tel"
-                            placeholder="(555) 010-0123"
-                            className="mt-2"
-                            value={patient.phone}
-                            onChange={(event) => setPatient({ ...patient, phone: event.target.value })}
-                            pattern="[0-9+(). -]{7,20}"
-                            title="Enter 7 to 20 digits with common phone punctuation."
-                            required
-                          />
+                        <div className="flex justify-between gap-4">
+                          <span className="text-sm text-[var(--medium-gray)]">Treatment interest</span>
+                          <span className="text-right font-medium">{treatment.replace("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())}</span>
                         </div>
-                      </div>
+                      </Card>
 
                       <div className="flex gap-3">
                         <Button 
                           variant="outline" 
                           size="lg"
                           className="flex-1"
-                          type="button"
                           onClick={() => setStep(2)}
                         >
                           Back
@@ -314,13 +363,15 @@ export function AppointmentBooking() {
                         <Button 
                           size="lg" 
                           className="flex-1 bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90"
-                          type="submit"
+                          onClick={handleBooking}
+                          disabled={!ready || invalidReschedule}
                         >
-                          Preview Request
+                          {rescheduleId ? "Save New Time" : "Save Demo Appointment"}
                           <CheckCircle className="ml-2 w-5 h-5" />
                         </Button>
                       </div>
-                    </form>
+                      {saveError && <p className="text-sm text-red-700" role="alert">{saveError}</p>}
+                    </div>
                   )}
                 </Card>
               </motion.div>
@@ -408,7 +459,7 @@ export function AppointmentBooking() {
                   <div className="mt-6 pt-6 border-t border-border">
                     <div className="bg-[var(--soft-beige)]/50 rounded-lg p-4">
                       <div className="text-sm text-[var(--medium-gray)] mb-1">Demo preview</div>
-                      <div className="text-sm">No appointment is booked and no payment is collected.</div>
+                      <div className="text-sm">Saved only in this browser. No practice is notified and no payment is collected.</div>
                     </div>
                   </div>
                 </Card>
@@ -427,9 +478,9 @@ export function AppointmentBooking() {
                 <CheckCircle className="w-10 h-10 text-white" />
               </div>
               
-              <h2 className="text-4xl mb-4">Demo Request Preview</h2>
+              <h2 className="text-4xl mb-4">{rescheduleId ? "Demo Appointment Updated" : "Demo Appointment Saved"}</h2>
               <p className="text-xl text-[var(--medium-gray)] mb-8">
-                This is a preview, not a booking. Nothing has been sent to the practice, no appointment is reserved, and no confirmation email will be sent.
+                Your sample appointment is saved in this browser for this demo only. The practice has not been contacted, no real appointment is reserved, and no confirmation email is sent.
               </p>
               <p className="mb-8 rounded-lg border border-[var(--premium-blue)]/20 bg-[var(--premium-blue)]/5 p-4 text-sm text-[var(--medium-gray)]" role="status">
                 A live booking experience requires a connected scheduling service and a verified practice account.
@@ -470,21 +521,6 @@ export function AppointmentBooking() {
                       <div className="text-sm text-[var(--medium-gray)]">Treatment interest</div>
                       <div className="font-medium">{treatment.replace("-", " ").replace(/\b\w/g, (letter) => letter.toUpperCase())}</div>
                     </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-[var(--champagne-gold)]" />
-                    <div>
-                      <div className="text-sm text-[var(--medium-gray)]">Demo contact</div>
-                      <div className="font-medium">{patient.firstName} {patient.lastName}</div>
-                    </div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail className="w-5 h-5 text-[var(--champagne-gold)]" />
-                    <div className="font-medium">{patient.email}</div>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone className="w-5 h-5 text-[var(--champagne-gold)]" />
-                    <div className="font-medium">{patient.phone}</div>
                   </div>
                 </div>
               </div>

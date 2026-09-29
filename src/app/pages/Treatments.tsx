@@ -163,9 +163,9 @@ export function Treatments() {
             </Badge>
             <h1 className="text-6xl mb-6 text-white">Transform Your Smile</h1>
             <p className="text-xl text-white/80 max-w-3xl mx-auto leading-relaxed">
-              Discover world-class dental treatments designed to give you the smile you've always dreamed of. 
-              From quick enhancements to complete transformations, we offer solutions for every need.
+              Explore sample treatment information in this product preview. Prices, availability, and outcomes are examples only; ask a licensed dental professional about your care.
             </p>
+            <p className="mt-4 text-sm text-white/70">The treatment descriptions and clinical claims below are illustrative placeholders, not medical advice.</p>
           </motion.div>
         </div>
       </section>
@@ -181,7 +181,7 @@ export function Treatments() {
               transition={{ delay: index * 0.1 }}
               viewport={{ once: true }}
             >
-              <Card className="overflow-hidden hover:shadow-2xl transition-all duration-500 group">
+              <Card id={`treatment-${treatment.id}`} className="overflow-hidden hover:shadow-2xl transition-all duration-500 group">
                 <div className={`grid lg:grid-cols-2 gap-0 ${index % 2 === 1 ? 'lg:grid-flow-dense' : ''}`}>
                   {/* Image */}
                   <div className={`relative h-96 lg:h-auto overflow-hidden ${index % 2 === 1 ? 'lg:col-start-2' : ''}`}>
@@ -246,16 +246,30 @@ export function Treatments() {
                       </div>
                     </div>
 
+                    <div id={`process-${treatment.id}`} className="mb-8 scroll-mt-24">
+                      <h4 className="mb-4">Example care journey</h4>
+                      <ol className="grid gap-3">
+                        {treatment.process.map((step, stepIndex) => (
+                          <li key={step} className="flex items-start gap-3 text-[var(--medium-gray)]">
+                            <span className="flex h-6 w-6 flex-shrink-0 items-center justify-center rounded-full bg-[var(--champagne-gold)]/10 text-xs font-medium text-[var(--dark-text)]">
+                              {stepIndex + 1}
+                            </span>
+                            <span>{step}</span>
+                          </li>
+                        ))}
+                      </ol>
+                    </div>
+
                     {/* Actions */}
                     <div className="flex flex-wrap gap-3">
                       <Button size="lg" asChild className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
                         <Link to="/discover">
-                          Book Consultation
+                          Browse Sample Providers
                           <ArrowRight className="ml-2 w-5 h-5" />
                         </Link>
                       </Button>
-                      <Button size="lg" variant="outline" className="border-[var(--champagne-gold)]/30">
-                        Learn More
+                      <Button size="lg" variant="outline" className="border-[var(--champagne-gold)]/30" asChild>
+                        <a href={`#process-${treatment.id}`}>View Example Steps</a>
                       </Button>
                     </div>
                   </div>
@@ -275,7 +289,7 @@ export function Treatments() {
           <Card className="p-12 text-center bg-gradient-to-br from-[var(--soft-beige)] to-white">
             <h2 className="text-4xl mb-4">Not Sure Which Treatment is Right for You?</h2>
             <p className="text-xl text-[var(--medium-gray)] mb-8 max-w-2xl mx-auto">
-              Schedule a free consultation with one of our expert dentists to discuss your goals and create a personalized treatment plan.
+              Browse the sample provider directory to preview the interactive scheduling flow.
             </p>
             <div className="flex flex-wrap gap-4 justify-center">
               <Button size="lg" asChild className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
@@ -284,9 +298,11 @@ export function Treatments() {
                   <ArrowRight className="ml-2 w-5 h-5" />
                 </Link>
               </Button>
-              <Button size="lg" variant="outline" className="border-[var(--champagne-gold)]/30">
-                <Clock className="mr-2 w-5 h-5" />
-                Free Consultation
+              <Button size="lg" variant="outline" className="border-[var(--champagne-gold)]/30" asChild>
+                <Link to="/discover">
+                  <Clock className="mr-2 w-5 h-5" />
+                  Preview Scheduling
+                </Link>
               </Button>
             </div>
           </Card>

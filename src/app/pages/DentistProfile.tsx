@@ -7,11 +7,13 @@ import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Link, useParams } from "react-router";
 import { 
   Star, MapPin, Award, Calendar, Clock, Shield, 
-  BookOpen, Users, TrendingUp, CheckCircle, Play
+  BookOpen, Users, Play
 } from "lucide-react";
 import { ImageWithFallback } from "../components/figma/ImageWithFallback";
+import { getProviderById } from "../data/providers";
+import { nextSampleWeekdayDate } from "../data/demoDates";
 
-const dentistData = {
+const sampleProfile = {
   name: "Dr. Sarah Chen",
   specialty: "Cosmetic Dentistry & Smile Design",
   rating: 4.9,
@@ -45,7 +47,7 @@ const dentistData = {
       date: "2 weeks ago",
       treatment: "Smile Design",
       comment: "Dr. Chen transformed my smile beyond my expectations. Her attention to detail and gentle approach made the entire process comfortable and enjoyable.",
-      verified: true,
+      sample: true,
     },
     {
       author: "David P.",
@@ -53,7 +55,7 @@ const dentistData = {
       date: "1 month ago",
       treatment: "Teeth Whitening",
       comment: "Professional, efficient, and amazing results! My teeth are 4 shades whiter after just one session.",
-      verified: true,
+      sample: true,
     },
     {
       author: "Amanda F.",
@@ -61,13 +63,36 @@ const dentistData = {
       date: "2 months ago",
       treatment: "Veneers",
       comment: "The veneers look so natural, no one can tell they're not my real teeth. Dr. Chen is a true artist!",
-      verified: true,
+      sample: true,
     },
   ],
 };
 
 export function DentistProfile() {
   const { id } = useParams();
+  const provider = getProviderById(id);
+
+  if (!provider) {
+    return (
+      <div className="mx-auto max-w-2xl px-6 py-20 text-center">
+        <h1 className="mb-4 text-3xl">Provider not found</h1>
+        <p className="mb-6 text-[var(--medium-gray)]">This sample provider profile is unavailable.</p>
+        <Button asChild><Link to="/discover">Browse providers</Link></Button>
+      </div>
+    );
+  }
+
+  const dentistData = {
+    ...sampleProfile,
+    name: provider.name,
+    specialty: provider.specialty,
+    rating: provider.rating,
+    reviewCount: provider.reviews,
+    experience: provider.experience,
+    location: provider.location,
+    image: provider.image,
+    certifications: provider.certifications,
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -93,13 +118,12 @@ export function DentistProfile() {
               {/* Avatar */}
               <div className="relative">
                 <Avatar className="w-40 h-40 border-4 border-white shadow-xl">
-                  <AvatarImage src={`https://images.unsplash.com/${dentistData.image}?w=200&q=80`} />
-                  <AvatarFallback>SC</AvatarFallback>
+                  <AvatarImage alt="" src={`https://images.unsplash.com/${dentistData.image}?w=200&q=80`} />
+                  <AvatarFallback>{dentistData.name.split(" ").slice(1, 3).map((part) => part[0]).join("")}</AvatarFallback>
                 </Avatar>
                 <div className="absolute -bottom-2 -right-2">
-                  <Badge className="bg-green-500 text-white border-0 shadow-lg">
-                    <CheckCircle className="w-3 h-3 mr-1" />
-                    Verified
+                  <Badge variant="outline" className="bg-white shadow-lg">
+                    Sample profile
                   </Badge>
                 </div>
               </div>
@@ -175,14 +199,14 @@ export function DentistProfile() {
 
                 <div className="flex gap-3">
                   <Button size="lg" asChild className="bg-gradient-to-r from-[var(--champagne-gold)] to-[var(--premium-blue)] text-white hover:opacity-90">
-                    <Link to={`/book/${id}`}>
+                    <Link to={`/book/${provider.id}`}>
                       <Calendar className="w-5 h-5 mr-2" />
                       Book Appointment
                     </Link>
                   </Button>
-                  <Button size="lg" variant="outline" className="border-[var(--champagne-gold)]/30">
+                  <Button size="lg" variant="outline" disabled title="Virtual tours are not included in this preview." className="border-[var(--champagne-gold)]/30">
                     <Play className="w-5 h-5 mr-2" />
-                    Virtual Tour
+                    Tour unavailable
                   </Button>
                 </div>
               </div>
@@ -298,7 +322,7 @@ export function DentistProfile() {
                       <div className="text-2xl text-[var(--champagne-gold)]">{treatment.price}</div>
                     </div>
                     <Button className="w-full" variant="outline" asChild>
-                      <Link to={`/book/${id}`}>Book Consultation</Link>
+                      <Link to={`/book/${provider.id}`}>Preview Booking</Link>
                     </Button>
                   </Card>
                 ))}
@@ -318,10 +342,9 @@ export function DentistProfile() {
                         <div>
                           <div className="flex items-center gap-2 mb-1">
                             <div className="font-medium">{review.author}</div>
-                            {review.verified && (
-                              <Badge variant="outline" className="border-green-500 text-green-600 text-xs">
-                                <CheckCircle className="w-3 h-3 mr-1" />
-                                Verified Patient
+                            {review.sample && (
+                              <Badge variant="outline" className="text-xs">
+                                Sample review
                               </Badge>
                             )}
                           </div>
@@ -347,19 +370,26 @@ export function DentistProfile() {
                   <Card key={day.day} className="p-6">
                     <h3 className="mb-4">{day.day}</h3>
                     <div className="space-y-2">
-                      {day.slots.map((slot) => (
-                        <Button
-                          key={slot}
-                          variant="outline"
-                          className="w-full justify-start hover:bg-[var(--champagne-gold)]/10 hover:border-[var(--champagne-gold)]"
-                          asChild
-                        >
-                          <Link to={`/book/${id}`}>
-                            <Clock className="w-4 h-4 mr-2" />
-                            {slot}
-                          </Link>
-                        </Button>
-                      ))}
+                      {day.slots.map((slot) => {
+                        const query = new URLSearchParams({
+                          date: nextSampleWeekdayDate(day.day) ?? "",
+                          time: slot,
+                        });
+
+                        return (
+                          <Button
+                            key={slot}
+                            variant="outline"
+                            className="w-full justify-start hover:bg-[var(--champagne-gold)]/10 hover:border-[var(--champagne-gold)]"
+                            asChild
+                          >
+                            <Link to={`/book/${provider.id}?${query.toString()}`}>
+                              <Clock className="w-4 h-4 mr-2" />
+                              {slot}
+                            </Link>
+                          </Button>
+                        );
+                      })}
                     </div>
                   </Card>
                 ))}
